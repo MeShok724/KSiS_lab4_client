@@ -9,6 +9,7 @@ namespace Fisher;
 public class Game
 {
     public delegate void MessageDelegate(GameMessage message);
+    public delegate void NewFishDelegate(int x, int y);
     public delegate void EmptyDelegate();
 
     public event MessageDelegate? ActionMessageCome;
@@ -16,6 +17,7 @@ public class Game
     public event EmptyDelegate? ActionConnection;
     public event EmptyDelegate? ActionGameStart;
     public event MessageDelegate? ActionEndGame;
+    public event NewFishDelegate? ActionNewFish;
     
     private ClientWebSocket? _client;
     
@@ -27,24 +29,25 @@ public class Game
     public const string EndGame = "End";
     public const string Enemy = "Enemy";
     public const string messageEmpty = "Empty";
+    private Thread _thread;
     
     public const string Ready = "Ready";
 
     public class GameMessage
     {
         public string Command { get; set; }
-        public string OpponentName { get; set; }
-        public int OpponentScores { get; set; }
-
+        public string Name { get; set; }
+        public int Scores { get; set; }
+        public GameMessage(){}
         public GameMessage(string command)
         {
             Command = command;
         }
-        public GameMessage(string command, string opponentName, int opponentScores)
+        public GameMessage(string command, string name, int scores)
         {
             Command = command;
-            OpponentName = opponentName;
-            OpponentScores = opponentScores;
+            Name = name;
+            Scores = scores;
         }
     }
     public async void Connect(string ip, string port)
@@ -64,6 +67,7 @@ public class Game
     }
     public async Task SendMessage(GameMessage message)
     {
+        Console.WriteLine("Sending message: " + message);
         string json = JsonSerializer.Serialize(message);
         byte[] buffer = Encoding.UTF8.GetBytes(json);
         await _client.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
@@ -129,5 +133,16 @@ public class Game
                 ActionEnemyJoin(message);
                 break;
         }
+    }
+
+    public void GameProcessStart(int width, int height)
+    {
+        _thread = new Thread(() => GameProcessThread(width, height));
+        _thread.Start();
+    }
+
+    public void GameProcessThread(int width, int height)
+    {
+        
     }
 }

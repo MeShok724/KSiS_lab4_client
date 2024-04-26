@@ -7,13 +7,15 @@ public partial class FormGame : Form
     private Game _game;
     private Button btnReady;
     private Label lInfo;
+    private Label lEnemy;
+    private Panel gamePanel;
     public FormGame(Game game)
     {
         InitializeComponent();
         Size = new Size(1800, 1000);
         btnReady = new Button();
-        btnReady.Top = 600;
-        btnReady.Left = 490;
+        btnReady.Top = 20;
+        btnReady.Left = 770;
         btnReady.Size = new Size(100, 40);
         btnReady.Text = "Готов";
         btnReady.Click += btnReady_Click;
@@ -22,10 +24,27 @@ public partial class FormGame : Form
 
         lInfo = new Label();
         lInfo.Text = "Ожидание оппонента...";
-        lInfo.Left = 300;
-        lInfo.Top = 100;
+        lInfo.Left = 350;
+        lInfo.Top = 20;
         lInfo.Size = new Size(400, 30);
         Controls.Add(lInfo);
+        
+        lEnemy = new Label();
+        lEnemy.Text = "";
+        lEnemy.Left = 20;
+        lEnemy.Top = 20;
+        lEnemy.Size = new Size(300, 30);
+        Controls.Add(lEnemy);
+
+        gamePanel = new Panel();
+        gamePanel.Top = 70;
+        gamePanel.Left = 10;
+        gamePanel.Size = new Size(ClientSize.Width-20, ClientSize.Height - 80);
+        // string currentDirectory = Directory.GetCurrentDirectory();
+        // string imagePath = Path.Combine(currentDirectory, @"images\lake2.jpg");
+        gamePanel.BackgroundImage = Image.FromFile(@"..\..\..\images\lake2.jpg");
+        gamePanel.BackgroundImageLayout = ImageLayout.Stretch;
+        Controls.Add(gamePanel);
         
         _game = game;
         Closing += (sender, args) => { Application.Exit(); };
@@ -39,6 +58,10 @@ public partial class FormGame : Form
         if (lInfo.InvokeRequired)
             lInfo.Invoke(lAction); 
         else lAction();
+        Action lAction1 = () => lEnemy.Text = $"Ваш противник: {gameMessage.Name}\n";
+        if (lEnemy.InvokeRequired)
+            lEnemy.Invoke(lAction1); 
+        else lAction1();
         if (btnReady.InvokeRequired)
             btnReady.Invoke(() => btnReady.Show());
         else btnReady.Show();
@@ -57,5 +80,11 @@ public partial class FormGame : Form
         if (lInfo.InvokeRequired)
             lInfo.Invoke(lAction); 
         else lAction();
+        _game.GameProcessStart(gamePanel.Width, gamePanel.Height);
+    }
+
+    private void NewFish(int x, int y)
+    {
+        
     }
 }
