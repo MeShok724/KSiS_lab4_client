@@ -1,12 +1,14 @@
 ﻿using System.Net.WebSockets;
 using System.Text;
 using Thread = System.Threading.Thread;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Fisher;
 
 public class Game
 {
-    public delegate void MessageDelegate(string message);
+    public delegate void MessageDelegate(GameMessage message);
     public delegate void EmptyDelegate();
 
     public event MessageDelegate? ActionMessageCome;
@@ -26,7 +28,13 @@ public class Game
     public const string Enemy = "Enemy";
     
     public const string Ready = "Ready";
-    
+
+    public class GameMessage
+    {
+        public string Command { get; set; }
+        public string OpponentName { get; set; }
+        public int OpponentScores { get; set; }
+    }
     public async void Connect(string ip, string port)
     {
         try
@@ -42,9 +50,10 @@ public class Game
             Console.WriteLine(e);
         }
     }
-    public async Task SendMessage(string message)
+    public async Task SendMessage(GameMessage message)
     {
-        byte[] buffer = Encoding.UTF8.GetBytes(message);
+        string json = JsonSerializer.Serialize(message);
+        byte[] buffer = Encoding.UTF8.GetBytes(json);
         await _client.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
     }
 
@@ -76,9 +85,9 @@ public class Game
         _client.CloseAsync(WebSocketCloseStatus.NormalClosure, "Method StopClient", CancellationToken.None);
     }
 
-    private void ActionMessageHandler(string message)
+    private void ActionMessageHandler(GameMessage message)
     {
-        switch (message)
+        switch (message.Command)
         {
             case Start:
                 Console.WriteLine("Game is starting");

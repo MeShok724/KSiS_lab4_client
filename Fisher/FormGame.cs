@@ -34,8 +34,13 @@ public partial class FormGame : Form
 
     private void EnemyJoin(string name)
     {
-        lInfo.Text = "Нажмите готов для начала игры";
-        btnReady.Show();
+        Action lAction = () => lInfo.Text = "Нажмите готов для начала игры";
+        if (lInfo.InvokeRequired)
+            lInfo.Invoke(lAction); 
+        else lAction();
+        if (btnReady.InvokeRequired)
+            btnReady.Invoke(() => btnReady.Show());
+        else btnReady.Show();
     }
 
     private async void btnReady_Click(object? sender, EventArgs e)
