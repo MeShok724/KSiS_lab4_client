@@ -30,9 +30,10 @@ public partial class FormGame : Form
         _game = game;
         Closing += (sender, args) => { Application.Exit(); };
         _game.ActionEnemyJoin += EnemyJoin;
+        _game.ActionGameStart += StartGame;
     }
 
-    private void EnemyJoin(string name)
+    private void EnemyJoin(Game.GameMessage gameMessage)
     {
         Action lAction = () => lInfo.Text = "Нажмите готов для начала игры";
         if (lInfo.InvokeRequired)
@@ -45,8 +46,16 @@ public partial class FormGame : Form
 
     private async void btnReady_Click(object? sender, EventArgs e)
     {
-        await _game.SendMessage(Game.Ready);
+        await _game.SendMessage(new Game.GameMessage(Game.Ready));
         btnReady.Hide();
         lInfo.Text = "Ожидание готовности оппонента...";
+    }
+
+    private void StartGame()
+    {
+        Action lAction = () => lInfo.Text = "Игра началась";
+        if (lInfo.InvokeRequired)
+            lInfo.Invoke(lAction); 
+        else lAction();
     }
 }

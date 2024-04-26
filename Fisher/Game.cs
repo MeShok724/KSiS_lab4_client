@@ -26,6 +26,7 @@ public class Game
     public const string NoWinner = "No winner";
     public const string EndGame = "End";
     public const string Enemy = "Enemy";
+    public const string messageEmpty = "Empty";
     
     public const string Ready = "Ready";
 
@@ -34,6 +35,17 @@ public class Game
         public string Command { get; set; }
         public string OpponentName { get; set; }
         public int OpponentScores { get; set; }
+
+        public GameMessage(string command)
+        {
+            Command = command;
+        }
+        public GameMessage(string command, string opponentName, int opponentScores)
+        {
+            Command = command;
+            OpponentName = opponentName;
+            OpponentScores = opponentScores;
+        }
     }
     public async void Connect(string ip, string port)
     {
@@ -65,7 +77,8 @@ public class Game
             WebSocketReceiveResult result = await _client.ReceiveAsync(buffer, CancellationToken.None);
 
             string message = Encoding.UTF8.GetString(buffer.Array != null ? buffer.Array : Array.Empty<byte>(), 0, result.Count);
-            ActionMessageCome(message);
+            GameMessage gameMessage = JsonSerializer.Deserialize<GameMessage>(message);
+            ActionMessageCome(gameMessage==null?new GameMessage(messageEmpty):gameMessage);
             // ActionMessageCome!=null?ActionMessageCome(message):;
             Console.WriteLine("Received message: " + message);
         }
@@ -91,20 +104,21 @@ public class Game
         {
             case Start:
                 Console.WriteLine("Game is starting");
+                ActionGameStart();
                 break;
             case EndGame:
                 Console.WriteLine("Game is over");
-                ActionEndGame(NoWinner);
+                ActionEndGame(message);
                 StopClient();
                 break;
             case Win:
                 Console.WriteLine("You win");
-                ActionEndGame(Win);
+                ActionEndGame(message);
                 StopClient();
                 break;
             case Lose:
                 Console.WriteLine("Tou lose");
-                ActionEndGame(Lose);
+                ActionEndGame(message);
                 StopClient();
                 break;
             case Connected:
@@ -112,7 +126,7 @@ public class Game
                 break;
             case Enemy:
                 // Console.WriteLine("Tou are connected");
-                ActionEnemyJoin(string.Empty);
+                ActionEnemyJoin(message);
                 break;
         }
     }
