@@ -1,4 +1,5 @@
-﻿using System.Net.WebSockets;
+﻿using System.Media;
+using System.Net.WebSockets;
 using System.Text;
 using Thread = System.Threading.Thread;
 using System.Text.Json;
@@ -13,6 +14,7 @@ public class Game
     public delegate void EndGameDelegate(EndGameMessage message);
     public delegate void NewFishDelegate(int x, int y);
     public delegate void TimerDelegate(int time);
+    public delegate void ScoreDelegate(int EnemyScore);
     public delegate void EmptyDelegate();
 
     public event MessageDelegate? ActionMessageCome;
@@ -22,6 +24,7 @@ public class Game
     public event EndGameDelegate? ActionEndGame;
     public event NewFishDelegate? ActionNewFish;
     public event TimerDelegate? ActionTimerTick;
+    public event ScoreDelegate? ActionUpdateEnemyScore;
     
     private ClientWebSocket? _client;
     
@@ -29,18 +32,22 @@ public class Game
     public const string messageStart = "Start";
     public const string messageEndGame = "End";
     public const string messageEnemy = "Enemy";
-    public const string messageEmpty = "Empty";
+    // public const string messageEmpty = "Empty";
     public const string messageUpdate = "Update";
     public const string messageNewFish = "Fish";
-    private Thread _thread;
+    
+    private Thread gameProcessThread;
     private Thread receivingThread;
     
     public const string Ready = "Ready";
+    
     public int EnemyScore;
     public int SelfScore;
 
     public volatile int remainingTime;
     public Timer timer;
+    public SoundPlayer soundPlayer = new SoundPlayer(@"..\..\..\songs\sound2.wav");
+    
     public string SelfName;
     public string EnemyName;
 
@@ -48,7 +55,7 @@ public class Game
     {
         public string Command { get; set; }
         public string Name { get; set; }
-        public int Scores { get; set; }
+        public int Score { get; set; }
         public int FishX { get; set; }
         public int FishY { get; set; }
         public GameMessage(){}
@@ -56,11 +63,11 @@ public class Game
         {
             Command = command;
         }
-        public GameMessage(string command, string name, int scores)
+        public GameMessage(string command, string name, int score)
         {
             Command = command;
             Name = name;
-            Scores = scores;
+            Score = score;
         }
     }
 
@@ -73,12 +80,12 @@ public class Game
         public int winnerScore;
         public int loserScore;
     }
-    public async void Connect(string ip, string port)
+    public async void Connect(string ip, string port, string userName)
     {
         try
         {
             _client = new ClientWebSocket();
-            Uri serverUri = new Uri($"ws://{ip}:{port}/ws");
+            Uri serverUri = new Uri($"ws://{ip}:{port}/ws?name={userName}");
             await _client.ConnectAsync(serverUri, CancellationToken.None);
             StartReceiving();
             ActionConnection();
@@ -137,7 +144,13 @@ public class Game
         {
             case messageStart:
                 Console.WriteLine("Game is starting");
-                ActionGameStart();
+                Thread threadMessageStart = new Thread(() =>
+                {
+                    soundPlayer.PlayLooping();
+                    ActionGameStart();
+                    ActionNewFish(message.FishX, message.FishY);
+                });
+                threadMessageStart.Start();
                 break;
             case messageEndGame:
                 Console.WriteLine("Game is over");
@@ -151,18 +164,24 @@ public class Game
                 ActionEnemyJoin(message);
                 break;
             case messageUpdate:
-                EnemyScore = message.Scores;
+                EnemyScore = message.Score;
                 break;
             case messageNewFish:
-                ActionNewFish(message.FishX, message.FishY);
+                Thread threadMessageNewFish = new Thread(() =>
+                {
+                    ActionUpdateEnemyScore(message.Score);
+                    ActionNewFish(message.FishX, message.FishY);
+                });
+                threadMessageNewFish.Start();
+                
                 break;
         }
     }
 
     public void GameProcessStart()
     {
-        _thread = new Thread(() => GameProcessThread());
-        _thread.Start();
+        gameProcessThread = new Thread(() => GameProcessThread());
+        gameProcessThread.Start();
     }
 
     private void CreateGameResult(bool isCorrect = true)
@@ -181,7 +200,7 @@ public class Game
             message.winnerScore = SelfScore;
             message.loserScore = EnemyScore;
             message.winnerName = SelfName;
-            message.isCorrect = false;
+            message.isCorrect = true;
             ActionEndGame(message);
         } else if (SelfScore < EnemyScore)
         {
@@ -191,7 +210,7 @@ public class Game
             message.winnerScore = EnemyScore;
             message.loserScore = SelfScore;
             message.winnerName = EnemyName;
-            message.isCorrect = false;
+            message.isCorrect = true;
             ActionEndGame(message);
         }
         else
@@ -202,7 +221,7 @@ public class Game
             message.winnerScore = EnemyScore;
             message.loserScore = SelfScore;
             message.winnerName = EnemyName;
-            message.isCorrect = false;
+            message.isCorrect = true;
             ActionEndGame(message);
         }
     }
@@ -218,6 +237,7 @@ public class Game
 
         if (remainingTime <= 0)
         {
+            soundPlayer.Stop();
             timer.Dispose();
             CreateGameResult();
         }

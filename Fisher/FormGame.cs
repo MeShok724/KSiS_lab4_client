@@ -9,10 +9,21 @@ public partial class FormGame : Form
     private Label lInfo;
     private Label lTime;
     private Label lEnemy;
-    private Panel gamePanel;
+    private Label lSelfScore;
+    private Label lEnemyScore;
+    private DoubleBufferedPanel gamePanel;
     private Panel fishPanel;
     private int fishWidth = 100;
     private int fishHeight = 50;
+    
+    public class DoubleBufferedPanel : Panel
+    {
+        public DoubleBufferedPanel()
+        {
+            // Включаем двойную буферизацию при создании панели
+            DoubleBuffered = true;
+        }
+    }
     public FormGame(Game game)
     {
         InitializeComponent();
@@ -25,7 +36,14 @@ public partial class FormGame : Form
         btnReady.Click += btnReady_Click;
         Controls.Add(btnReady);
         btnReady.Hide();
-
+        
+        lEnemy = new Label();
+        lEnemy.Text = "";
+        lEnemy.Left = 20;
+        lEnemy.Top = 20;
+        lEnemy.Size = new Size(300, 30);
+        Controls.Add(lEnemy);
+        
         lInfo = new Label();
         lInfo.Text = "Ожидание оппонента...";
         lInfo.Left = 350;
@@ -37,17 +55,24 @@ public partial class FormGame : Form
         lTime.Text = "Время";
         lTime.Left = 800;
         lTime.Top = 20;
-        lTime.Size = new Size(200, 30);
+        lTime.Size = new Size(100, 30);
         Controls.Add(lTime);
         
-        lEnemy = new Label();
-        lEnemy.Text = "";
-        lEnemy.Left = 20;
-        lEnemy.Top = 20;
-        lEnemy.Size = new Size(300, 30);
-        Controls.Add(lEnemy);
+        lSelfScore = new Label();
+        lSelfScore.Text = "Ваши очки: ";
+        lSelfScore.Left = 900;
+        lSelfScore.Top = 20;
+        lSelfScore.Size = new Size(300, 30);
+        Controls.Add(lSelfScore);
+        
+        lEnemyScore = new Label();
+        lEnemyScore.Text = "Очки противника: ";
+        lEnemyScore.Left = 1200;
+        lEnemyScore.Top = 20;
+        lEnemyScore.Size = new Size(300, 30);
+        Controls.Add(lEnemyScore);
 
-        gamePanel = new Panel();
+        gamePanel = new DoubleBufferedPanel();
         gamePanel.Top = 70;
         gamePanel.Left = 10;
         gamePanel.Size = new Size(ClientSize.Width-20, ClientSize.Height - 80);
@@ -66,6 +91,7 @@ public partial class FormGame : Form
         _game.ActionNewFish += NewFish;
         _game.ActionTimerTick += ShowTime;
         _game.ActionEndGame += GameOver;
+        _game.ActionUpdateEnemyScore += UpdateEnemyScore;
     }
 
     private void EnemyJoin(Game.GameMessage gameMessage)
@@ -95,41 +121,63 @@ public partial class FormGame : Form
     {
         _game.EnemyScore = 0;
         _game.SelfScore = 0;
-        Action lAction = () => lInfo.Text = "Игра началась";
+        Action lInfoAction = () => lInfo.Text = "Игра началась";
         if (lInfo.InvokeRequired)
-            lInfo.Invoke(lAction); 
-        else lAction();
+            lInfo.Invoke(lInfoAction); 
+        else lInfoAction();
         
-        Action lAction1 = () => lTime.Text = "60";
+        Action lTimeAction = () => lTime.Text = "60";
         if (lTime.InvokeRequired)
-            lTime.Invoke(lAction1); 
-        else lAction1();
+            lTime.Invoke(lTimeAction); 
+        else lTimeAction();
+        
+        Action lSelfScoreAction = () => lSelfScore.Text = $"Ваши очки: {_game.SelfScore}";
+        if (lSelfScore.InvokeRequired)
+            lSelfScore.Invoke(lSelfScoreAction); 
+        else lSelfScoreAction();
+        
+        Action lEnemyScoreAction = () => lEnemyScore.Text = $"Очки противника: {_game.EnemyScore}";
+        if (lEnemyScore.InvokeRequired)
+            lEnemyScore.Invoke(lEnemyScoreAction); 
+        else lEnemyScoreAction();
         
         _game.GameProcessStart();
     }
 
     private void NewFish(int x, int y)
     {
-        Controls.Remove(fishPanel);
+        // gamePanel.SuspendLayout();
+        Action lDeleteFishAction = () => gamePanel.Controls.Remove(fishPanel);
+        if (gamePanel.InvokeRequired)
+            gamePanel.Invoke(lDeleteFishAction); 
+        else lDeleteFishAction();
+        
         fishPanel = new Panel();
         fishPanel.Size = new Size(fishWidth, fishHeight);
+        fishPanel.BackColor = Color.Transparent;
         fishPanel.Left = x;
         fishPanel.Top = y;
         fishPanel.BackgroundImage = Image.FromFile(@"..\..\..\images\fish1.png");
         fishPanel.BackgroundImageLayout = ImageLayout.Stretch;
         fishPanel.Click += FishClick;
         
-        Action lAction = () => gamePanel.Controls.Add(fishPanel);
+        Action lAddFishAction = () => gamePanel.Controls.Add(fishPanel);
         if (gamePanel.InvokeRequired)
-            gamePanel.Invoke(lAction); 
-        else lAction();
-        
+            gamePanel.Invoke(lAddFishAction); 
+        else lAddFishAction();
+        // gamePanel.ResumeLayout(); 
         Invalidate();
     }
 
     private void FishClick(object? sender, EventArgs e)
     {
         _game.SelfScore++;
+        
+        Action lSelfScoreAction = () => lSelfScore.Text = $"Ваши очки: {_game.SelfScore}";
+        if (lSelfScore.InvokeRequired)
+            lSelfScore.Invoke(lSelfScoreAction); 
+        else lSelfScoreAction();
+        
         _game.SendMessageFishClick();
     }
 
@@ -139,7 +187,7 @@ public partial class FormGame : Form
         if (lTime.InvokeRequired)
             lTime.Invoke(lAction1); 
         else lAction1();
-        Invalidate();
+        // Invalidate();
     }
 
     private void GameOver(Game.EndGameMessage message)
@@ -160,6 +208,14 @@ public partial class FormGame : Form
         {
             MessageBox.Show($"Вы проиграли, ваш противник {message.winnerName} набрал {message.winnerScore} очков, вы набрали {message.loserScore} очков");
         }
-        
+    }
+
+    private void UpdateEnemyScore(int score)
+    {
+        _game.EnemyScore = score;
+        Action lEnemyScoreAction = () => lEnemyScore.Text = $"Очки противника: {_game.EnemyScore}";
+        if (lEnemyScore.InvokeRequired)
+            lEnemyScore.Invoke(lEnemyScoreAction); 
+        else lEnemyScoreAction();
     }
 }
