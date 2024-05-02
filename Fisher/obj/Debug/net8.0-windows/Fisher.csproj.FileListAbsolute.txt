@@ -1,0 +1,15 @@
+C:\BSUIR\KSiS\lab4\client\Fisher\Fisher\bin\Debug\net8.0-windows\Fisher.exe
+C:\BSUIR\KSiS\lab4\client\Fisher\Fisher\bin\Debug\net8.0-windows\Fisher.deps.json
+C:\BSUIR\KSiS\lab4\client\Fisher\Fisher\bin\Debug\net8.0-windows\Fisher.runtimeconfig.json
+C:\BSUIR\KSiS\lab4\client\Fisher\Fisher\bin\Debug\net8.0-windows\Fisher.dll
+C:\BSUIR\KSiS\lab4\client\Fisher\Fisher\bin\Debug\net8.0-windows\Fisher.pdb
+C:\BSUIR\KSiS\lab4\client\Fisher\Fisher\obj\Debug\net8.0-windows\Fisher.GeneratedMSBuildEditorConfig.editorconfig
+C:\BSUIR\KSiS\lab4\client\Fisher\Fisher\obj\Debug\net8.0-windows\Fisher.AssemblyInfoInputs.cache
+C:\BSUIR\KSiS\lab4\client\Fisher\Fisher\obj\Debug\net8.0-windows\Fisher.AssemblyInfo.cs
+C:\BSUIR\KSiS\lab4\client\Fisher\Fisher\obj\Debug\net8.0-windows\Fisher.csproj.CoreCompileInputs.cache
+C:\BSUIR\KSiS\lab4\client\Fisher\Fisher\obj\Debug\net8.0-windows\Fisher.dll
+C:\BSUIR\KSiS\lab4\client\Fisher\Fisher\obj\Debug\net8.0-windows\refint\Fisher.dll
+C:\BSUIR\KSiS\lab4\client\Fisher\Fisher\obj\Debug\net8.0-windows\Fisher.pdb
+C:\BSUIR\KSiS\lab4\client\Fisher\Fisher\obj\Debug\net8.0-windows\Fisher.genruntimeconfig.cache
+C:\BSUIR\KSiS\lab4\client\Fisher\Fisher\obj\Debug\net8.0-windows\ref\Fisher.dll
+C:\BSUIR\KSiS\lab4\client\Fisher\Fisher\obj\Debug\net8.0-windows\Fisher.sourcelink.json
